@@ -1,5 +1,8 @@
 import { useState } from "react";
 import "./App.css";
+import ResultCard from "./components/ResultCard";
+import MeetingTable from "./components/MeetingTable";
+import FtefTable from "./components/FtefTable";
 
 function timeToMinutes(timeValue) {
   if (!timeValue) return 0;
@@ -56,6 +59,36 @@ const CONTACT_HOUR_TABLE = {
   275: 4.9,
   290: 5.0
 };
+
+function calculateMeetingRow(row) {
+  const totalClockMinutes = getClockMinutes(row.startTime, row.endTime);
+  const clockHours = Math.floor(totalClockMinutes / 60);
+  const partialClockMinutes = totalClockMinutes % 60;
+  const contactHours = getContactHours(totalClockMinutes);
+
+  const totalContactHours =
+    contactHours === null ? "" : round2(contactHours * row.totalMeetings);
+
+  return {
+    totalClockMinutes,
+    clockHours,
+    partialClockMinutes,
+    contactHours,
+    totalContactHours,
+  };
+}
+
+function calculateFtefRow(row, catalogHours, maxHours) {
+  const ftefPercent = row.workloadFactor > 0 ? catalogHours / row.workloadFactor : 0;
+  const assignPercent = maxHours > 0 ? row.instructorAssignedHours / maxHours : 0;
+  const instructorFtef = ftefPercent * assignPercent;
+
+  return {
+    ftefPercent,
+    assignPercent,
+    instructorFtef,
+  };
+}
 
 export default function App() {
   const [catalogHours, setCatalogHours] = useState(3);
@@ -161,6 +194,23 @@ export default function App() {
     return sum + ftefPercent * assignPercent;
   }, 0);
 
+  let courseStatus = "Not Scheduled";
+  let courseStatusColor = "warning";
+
+  if (totalScheduledContactHours >= minHours &&
+      totalScheduledContactHours <= maxHours) {
+    courseStatus = "Within Range";
+    courseStatusColor = "success";
+  }
+  else if (totalScheduledContactHours > maxHours) {
+    courseStatus = "Over Scheduled";
+    courseStatusColor = "warning";
+  }
+  else if (totalScheduledContactHours > 0) {
+    courseStatus = "Under Scheduled";
+    courseStatusColor = "warning";
+  }
+
   return (
     <main className="page">
       <section className="card">
@@ -168,6 +218,9 @@ export default function App() {
         <p className="intro">
           Enter catalog hours to calculate the semester hour range.
         </p>
+
+      <h2>Course Information</h2>
+
       <label className="field">
         <span>Catalog Hours</span>
         <input
@@ -194,195 +247,41 @@ export default function App() {
       </label>
 
         <div className="results">
-          <div className="result-card">
-            <span>Maximum Hours</span>
-            <strong>{maxHours}</strong>
-          </div>
-
-          <div className="result-card">
-            <span>Minimum Contact Hours</span>
-            <strong>{minHours}</strong>
-          </div>
+          <ResultCard title="Maximum Hours" value={maxHours}   color="success"/>
+          <ResultCard title="Minimum Contact Hours" value={minHours}   color="warning"/>
+          <ResultCard title="Target Weekly Contact Hours" value={targetWeeklyContactHours.toFixed(2)}   color="info"/>
+          <ResultCard title="Estimated Meeting Contact Hours" value={estimatedMeetingContactHours.toFixed(1)}   color="info"/>
+          <ResultCard title="Course Status" value={courseStatus} color={courseStatusColor} />
         </div>
+  </section>
 
-        <div className="result-card">
-          <span>Target Weekly Contact Hours</span>
-          <strong>{targetWeeklyContactHours.toFixed(2)}</strong>
-        </div>
+  <section className="card">
+    <MeetingTable
+      meetingRows={meetingRows}
+      updateMeetingRow={updateMeetingRow}
+      deleteMeetingRow={deleteMeetingRow}
+      addMeetingRow={addMeetingRow}
+      calculateMeetingRow={calculateMeetingRow}
+    />
 
-        <div className="result-card">
-          <span>Estimated Meeting Contact Hours</span>
-          <strong>{estimatedMeetingContactHours.toFixed(1)}</strong>
-        </div>
+     <ResultCard title="Total Scheduled Contact Hours" value={round2(totalScheduledContactHours)} color="success" />
 
-  <h2>Meeting Pattern</h2>
+  </section>
 
-  <table className="meeting-table">
-    <thead>
-      <tr>
-        <th>Start Time</th>
-        <th>End Time</th>
-        <th>Clock Hours</th>
-        <th>Clock Minutes</th>
-        <th>Total Clock Minutes</th>
-        <th>Contact Hours</th>
-        <th>Total Meetings</th>
-        <th>Total Contact Hours</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
+  <section className="card">
+    <FtefTable
+      ftefRows={ftefRows}
+      updateFtefRow={updateFtefRow}
+      deleteFtefRow={deleteFtefRow}
+      addFtefRow={addFtefRow}
+      calculateFtefRow={calculateFtefRow}
+      catalogHours={catalogHours}
+      maxHours={maxHours}
+    />  
 
-    <tbody>
-      {meetingRows.map((row, index) => {
-        const totalClockMinutes = getClockMinutes(row.startTime, row.endTime);
-        const clockHours = Math.floor(totalClockMinutes / 60);
-        const partialClockMinutes = totalClockMinutes % 60;
-        const contactHours = getContactHours(totalClockMinutes);
+    <ResultCard title="Total FTEF%" value={round2(totalFtefPercent)} color="success" />
 
-        const totalContactHours =
-          contactHours === null
-            ? ""
-            : round2(contactHours * row.totalMeetings);
-
-        return (
-          <tr key={index}>
-            <td>
-              <input
-                type="time"
-                value={row.startTime}
-                onChange={(event) =>
-                  updateMeetingRow(index, "startTime", event.target.value)
-                }
-              />
-            </td>
-
-            <td>
-              <input
-                type="time"
-                value={row.endTime}
-                onChange={(event) =>
-                  updateMeetingRow(index, "endTime", event.target.value)
-                }
-              />
-            </td>
-
-            <td>{clockHours}</td>
-            <td>{partialClockMinutes}</td>
-            <td>{totalClockMinutes}</td>
-            <td>{contactHours ?? ""}</td>
-
-            <td>
-              <input
-                type="number"
-                value={row.totalMeetings}
-                onChange={(event) =>
-                  updateMeetingRow(index, "totalMeetings", Number(event.target.value))
-                }
-              />
-            </td>
-
-            <td>{totalContactHours}</td>
-
-            <td>
-              <button
-                type="button"
-                onClick={() => deleteMeetingRow(index)}
-                disabled={meetingRows.length === 1}
-              >
-                Delete
-              </button>
-            </td>
-          </tr>
-        );
-      })}
-    </tbody>
-  </table>
-
-  <button type="button" onClick={addMeetingRow}>
-    Add Meeting Pattern
-  </button>
-
-  <div className="result-card">
-    <span>Total Scheduled Contact Hours</span>
-    <strong>{round2(totalScheduledContactHours)}</strong>
-  </div>
-
-  <h2>Instructor FTEF</h2>
-
-  <table className="ftef-table">
-    <thead>
-      <tr>
-        <th>Workload Factor</th>
-        <th>Catalog Hours</th>
-        <th>FTEF %</th>
-        <th>Class Contact Hours</th>
-        <th>Instructor Assigned Hours</th>
-        <th>% of Assignment</th>
-        <th>Instructor FTEF</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      {ftefRows.map((row, index) => {
-        const ftefPercent = row.workloadFactor > 0 ? catalogHours / row.workloadFactor : 0;
-        const assignPercent = maxHours > 0 ? row.instructorAssignedHours / maxHours : 0;
-        const instructorFtef = ftefPercent * assignPercent;
-
-        return (
-          <tr key={index}>
-            <td>
-              <input
-                type="number"
-                value={row.workloadFactor}
-                onChange={(event) =>
-                  updateFtefRow(index, "workloadFactor", Number(event.target.value) || 0)
-                }
-              />
-            </td>
-
-            <td>{catalogHours ?? ""}</td>
-            <td>{round2(ftefPercent * 100)}%</td>
-            <td>{maxHours ?? ""}</td>
-
-            <td>
-              <input
-                type="number"
-                value={row.instructorAssignedHours}
-                onChange={(event) =>
-                  updateFtefRow(index, "instructorAssignedHours", Number(event.target.value) || 0)
-                }
-              />
-            </td>
-
-            <td>{round2(assignPercent * 100)}%</td>
-            <td>{round2(instructorFtef * 100)}%</td>
-
-            <td>
-              <button
-                type="button"
-                onClick={() => deleteFtefRow(index)}
-                disabled={ftefRows.length === 1}
-              >
-                Delete
-              </button>
-            </td>
-          </tr>
-        );
-      })}
-    </tbody>
-  </table>
-
-  <div className="result-card">
-    <span>Total FTEF%</span>
-    <strong>{round2(totalFtefPercent)}</strong>
-  </div>
-
-  <button type="button" onClick={addFtefRow}>
-    Add Instructor Assignment
-  </button>
-
-      </section>
-    </main>
+    </section>
+  </main>
   );
 }
