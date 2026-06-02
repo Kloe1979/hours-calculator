@@ -187,29 +187,32 @@ export default function App() {
     });
   }
 
-  const totalFtefPercent = ftefRows.reduce((sum, row) => {
+  const totalFtef = ftefRows.reduce((sum, row) => {
     const ftefPercent = row.workloadFactor > 0 ? catalogHours / row.workloadFactor : 0;
     const assignPercent = catalogHours > 0 ? row.instructorAssignedHours / catalogHours : 0;
 
     return sum + ftefPercent * assignPercent;
   }, 0);
 
-  let courseStatus = "Not Scheduled";
-  let courseStatusColor = "warning";
+    let courseStatus = "Not Scheduled";
+    let courseStatusColor = "warning";
 
-  if (totalScheduledContactHours >= minHours &&
-      totalScheduledContactHours <= maxHours) {
-    courseStatus = "Within Range";
-    courseStatusColor = "success";
-  }
-  else if (totalScheduledContactHours > maxHours) {
-    courseStatus = "Over Scheduled";
-    courseStatusColor = "warning";
-  }
-  else if (totalScheduledContactHours > 0) {
-    courseStatus = "Under Scheduled";
-    courseStatusColor = "warning";
-  }
+    if (totalScheduledContactHours === 0) {
+      courseStatus = "No Meeting Pattern Entered";
+    }
+    else if (
+      totalScheduledContactHours >= minHours &&
+      totalScheduledContactHours <= maxHours
+    ) {
+      courseStatus = "Within Range";
+      courseStatusColor = "success";
+    }
+    else if (totalScheduledContactHours > maxHours) {
+      courseStatus = "Over Scheduled";
+    }
+    else {
+      courseStatus = "Under Scheduled";
+    }
 
   return (
     <main className="page">
@@ -219,7 +222,7 @@ export default function App() {
           Enter catalog hours to calculate the semester hour range.
         </p>
 
-      <h2>Course Information</h2>
+      <h2>Class Details</h2>
 
       <label className="field">
         <span>Catalog Hours</span>
@@ -246,42 +249,45 @@ export default function App() {
         />
       </label>
 
-        <div className="results">
-          <ResultCard title="Maximum Hours" value={maxHours}   color="success"/>
-          <ResultCard title="Minimum Contact Hours" value={minHours}   color="warning"/>
-          <ResultCard title="Target Weekly Contact Hours" value={targetWeeklyContactHours.toFixed(2)}   color="info"/>
-          <ResultCard title="Estimated Meeting Contact Hours" value={estimatedMeetingContactHours.toFixed(1)}   color="info"/>
-          <ResultCard title="Course Status" value={courseStatus} color={courseStatusColor} />
-        </div>
-  </section>
 
-  <section className="card">
-    <MeetingTable
-      meetingRows={meetingRows}
-      updateMeetingRow={updateMeetingRow}
-      deleteMeetingRow={deleteMeetingRow}
-      addMeetingRow={addMeetingRow}
-      calculateMeetingRow={calculateMeetingRow}
-    />
+     </section>
 
-     <ResultCard title="Total Scheduled Contact Hours" value={round2(totalScheduledContactHours)} color="success" />
+      <section className="card">
+        <h2>Summary</h2>
 
-  </section>
+          <div className="results">
+            <ResultCard title="Maximum Hours" value={maxHours}   color="success"/>
+            <ResultCard title="Minimum Contact Hours" value={minHours}   color="warning"/>
+            <ResultCard title="Target Weekly Contact Hours" value={targetWeeklyContactHours.toFixed(2)}   color="info"/>
+            <ResultCard title="Estimated Meeting Contact Hours" value={estimatedMeetingContactHours.toFixed(1)}   color="info"/>
+            <ResultCard title="Course Status" value={courseStatus} color={courseStatusColor} />
+            <ResultCard title="Total Scheduled Contact Hours" value={round2(totalScheduledContactHours)} color="success" />
+            <ResultCard title="Total FTEF%" value={round2(totalFtef)} color="success" />
+          </div>
 
-  <section className="card">
-    <FtefTable
-      ftefRows={ftefRows}
-      updateFtefRow={updateFtefRow}
-      deleteFtefRow={deleteFtefRow}
-      addFtefRow={addFtefRow}
-      calculateFtefRow={calculateFtefRow}
-      catalogHours={catalogHours}
-      maxHours={maxHours}
-    />  
+      </section>
 
-    <ResultCard title="Total FTEF%" value={round2(totalFtefPercent)} color="success" />
+      <section className="card">
+        <MeetingTable
+          meetingRows={meetingRows}
+          updateMeetingRow={updateMeetingRow}
+          deleteMeetingRow={deleteMeetingRow}
+          addMeetingRow={addMeetingRow}
+          calculateMeetingRow={calculateMeetingRow}
+        />
+      </section>
 
-    </section>
+      <section className="card">
+        <FtefTable
+          ftefRows={ftefRows}
+          updateFtefRow={updateFtefRow}
+          deleteFtefRow={deleteFtefRow}
+          addFtefRow={addFtefRow}
+          calculateFtefRow={calculateFtefRow}
+          catalogHours={catalogHours}
+          maxHours={maxHours}
+        /> 
+        </section>
   </main>
   );
 }

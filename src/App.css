@@ -6,20 +6,23 @@
 }
 
 .card {
-  max-width: 700px;
-  margin: 0 auto;
+  max-width: 1200px;
+  margin: 0 auto 24px auto;
   background: white;
   border-radius: 18px;
   padding: 32px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
 }
 
-h1 {
+h1,
+h2 {
   margin-top: 0;
+  text-align: center;
 }
 
 .intro {
   color: #555;
+  text-align: center;
 }
 
 .field {
@@ -29,25 +32,26 @@ h1 {
   font-weight: bold;
 }
 
-input {
-  max-width: 200px;
+.field input {
+  width: 100%;
+  max-width: 240px;
   padding: 10px;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .results {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 16px;
   margin-top: 24px;
 }
 
 .result-card {
-  flex: 1;
   background: #f9fafb;
   border: 1px solid #ddd;
   border-radius: 14px;
   padding: 20px;
+  min-height: 110px;
 }
 
 .result-card span {
@@ -59,24 +63,59 @@ input {
 .result-card strong {
   display: block;
   margin-top: 8px;
-  font-size: 32px;
+  font-size: 28px;
 }
 
-.meeting-table {
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.meeting-table,
+.ftef-table {
   width: 100%;
+  table-layout: auto;
   margin-top: 16px;
   border-collapse: collapse;
 }
 
 .meeting-table th,
-.meeting-table td {
+.meeting-table td,
+.ftef-table th,
+.ftef-table td {
   border: 1px solid #ddd;
   padding: 10px;
   text-align: left;
+  vertical-align: middle;
 }
 
-.meeting-table th {
+.meeting-table th,
+.ftef-table th {
   background: #f3f4f6;
+}
+
+.meeting-table input,
+.ftef-table input {
+  width: 100%;
+  max-width: 140px;
+  padding: 8px;
+  font-size: 14px;
+}
+
+button {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #d1d5db;
+  color: #6b7280;
+  cursor: not-allowed;
 }
 
 .success {
