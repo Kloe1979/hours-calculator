@@ -1,5 +1,4 @@
 import { useState } from "react";
-import "./App.css";
 import ResultCard from "./components/ResultCard";
 import MeetingTable from "./components/MeetingTable";
 import FtefTable from "./components/FtefTable";
@@ -194,80 +193,79 @@ export default function App() {
     return sum + ftefPercent * assignPercent;
   }, 0);
 
-    let courseStatus = "Not Scheduled";
-    let courseStatusColor = "warning";
+  let courseStatus;
+  let courseStatusColor = "warning";
 
-    if (totalScheduledContactHours === 0) {
-      courseStatus = "No Meeting Pattern Entered";
-    }
-    else if (
-      totalScheduledContactHours >= minHours &&
-      totalScheduledContactHours <= maxHours
-    ) {
-      courseStatus = "Within Range";
-      courseStatusColor = "success";
-    }
-    else if (totalScheduledContactHours > maxHours) {
-      courseStatus = "Over Scheduled";
-    }
-    else {
-      courseStatus = "Under Scheduled";
-    }
+  if (totalScheduledContactHours === 0) {
+    courseStatus = "No Meeting Pattern Entered";
+  } else if (
+    totalScheduledContactHours >= minHours &&
+    totalScheduledContactHours <= maxHours
+  ) {
+    courseStatus = "Within Range";
+    courseStatusColor = "success";
+  } else if (totalScheduledContactHours > maxHours) {
+    courseStatus = "Over Scheduled";
+  } else {
+    courseStatus = "Under Scheduled";
+  }
 
   return (
-    <main className="page">
-      <section className="card">
-      <h1>Hours Calculator</h1>
-        <p className="intro">
+    <main className="min-h-screen bg-gray-100 px-4 py-6 font-[Arial,sans-serif] text-gray-950 sm:p-10">
+      <section className="mx-auto mb-6 max-w-[1200px] rounded-[18px] bg-white p-6 shadow-[0_10px_25px_rgba(0,0,0,0.08)] sm:p-8">
+        <h1 className="mt-0 text-center text-4xl font-bold">Hours Calculator</h1>
+        <p className="text-center text-gray-600">
           Enter catalog hours to calculate the semester hour range.
         </p>
 
-      <h2>Class Details</h2>
+        <h2 className="mt-8 mb-2 text-center text-2xl font-bold">Class Details</h2>
 
-      <label className="field">
-        <span>Catalog Hours</span>
-        <input
-          type="number"
-          value={catalogHours}
-          onChange={(event) => setCatalogHours(Number(event.target.value))}
-        />
-      </label>
-      <label className="field">
-        <span>Instructional Weeks</span>
-        <input
-          type="number"
-          value={instructionalWeeks}
-          onChange={(event) => setInstructionalWeeks(Number(event.target.value))}
-        />
-      </label>
-      <label className="field">
-        <span>Meetings Per Week</span>
-        <input
-          type="number"
-          value={meetingsPerWeek}
-          onChange={(event) => setMeetingsPerWeek(Number(event.target.value))}
-        />
-      </label>
-
-
-     </section>
-
-      <section className="card">
-        <h2>Summary</h2>
-
-          <div className="results">
-            <ResultCard title="Maximum Hours" value={maxHours}   color="success"/>
-            <ResultCard title="Minimum Contact Hours" value={minHours}   color="warning"/>
-            <ResultCard title="Target Weekly Contact Hours" value={targetWeeklyContactHours.toFixed(2)}   color="info"/>
-            <ResultCard title="Estimated Meeting Contact Hours" value={estimatedMeetingContactHours.toFixed(1)}   color="info"/>
-            <ResultCard title="Course Status" value={courseStatus} color={courseStatusColor} />
-            <ResultCard title="Total Scheduled Contact Hours" value={round2(totalScheduledContactHours)} color="success" />
-            <ResultCard title="Total FTEF%" value={round2(totalFtef)} color="success" />
-          </div>
-
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <label className="grid gap-2 font-bold">
+            <span>Catalog Hours</span>
+            <input
+              className="w-full rounded-md border border-gray-300 px-2.5 py-2 text-base font-normal"
+              type="number"
+              value={catalogHours}
+              onChange={(event) => setCatalogHours(Number(event.target.value))}
+            />
+          </label>
+          <label className="grid gap-2 font-bold">
+            <span>Instructional Weeks</span>
+            <input
+              className="w-full rounded-md border border-gray-300 px-2.5 py-2 text-base font-normal"
+              type="number"
+              value={instructionalWeeks}
+              onChange={(event) => setInstructionalWeeks(Number(event.target.value))}
+            />
+          </label>
+          <label className="grid gap-2 font-bold">
+            <span>Meetings Per Week</span>
+            <input
+              className="w-full rounded-md border border-gray-300 px-2.5 py-2 text-base font-normal"
+              type="number"
+              value={meetingsPerWeek}
+              onChange={(event) => setMeetingsPerWeek(Number(event.target.value))}
+            />
+          </label>
+        </div>
       </section>
 
-      <section className="card">
+      <section className="mx-auto mb-6 max-w-[1200px] rounded-[18px] bg-white p-6 shadow-[0_10px_25px_rgba(0,0,0,0.08)] sm:p-8">
+        <h2 className="mt-0 mb-2 text-center text-2xl font-bold">Summary</h2>
+
+        <div className="mt-6 grid justify-center gap-4 [grid-template-columns:repeat(auto-fit,minmax(190px,220px))]">
+          <ResultCard title="Maximum Hours" value={maxHours} color="success" />
+          <ResultCard title="Minimum Contact Hours" value={minHours} color="warning" />
+          <ResultCard title="Target Weekly Contact Hours" value={targetWeeklyContactHours.toFixed(2)} color="info" />
+          <ResultCard title="Estimated Meeting Contact Hours" value={estimatedMeetingContactHours.toFixed(1)} color="info" />
+          <ResultCard title="Course Status" value={courseStatus} color={courseStatusColor} />
+          <ResultCard title="Total Scheduled Contact Hours" value={round2(totalScheduledContactHours)} color="success" />
+          <ResultCard title="Total FTEF%" value={round2(totalFtef)} color="success" />
+        </div>
+      </section>
+
+      <section className="mx-auto mb-6 max-w-[1200px] rounded-[18px] bg-white p-6 shadow-[0_10px_25px_rgba(0,0,0,0.08)] sm:p-8">
         <MeetingTable
           meetingRows={meetingRows}
           updateMeetingRow={updateMeetingRow}
@@ -277,7 +275,7 @@ export default function App() {
         />
       </section>
 
-      <section className="card">
+      <section className="mx-auto mb-6 max-w-[1200px] rounded-[18px] bg-white p-6 shadow-[0_10px_25px_rgba(0,0,0,0.08)] sm:p-8">
         <FtefTable
           ftefRows={ftefRows}
           updateFtefRow={updateFtefRow}
@@ -286,8 +284,8 @@ export default function App() {
           calculateFtefRow={calculateFtefRow}
           catalogHours={catalogHours}
           maxHours={maxHours}
-        /> 
-        </section>
-  </main>
+        />
+      </section>
+    </main>
   );
 }
