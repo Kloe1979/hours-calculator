@@ -122,8 +122,8 @@ export default function App() {
   }, 0);
   const classContactHours = round2(totalScheduledContactHours);
   const maxHours = catalogHours * 18;
+  const atLeastHours = catalogHours * 17;
   const minHours = catalogHours * 16;
-  const atLeastHours = (maxHours - minHours)/2 + minHours;
   const targetWeeklyContactHours =
     instructionalWeeks > 0
       ? maxHours / instructionalWeeks

@@ -11,8 +11,8 @@ export default function Summary({
     <>
       <div className="mt-3 grid justify-center gap-2 [grid-template-columns:repeat(auto-fit,minmax(150px,180px))]">
         <ResultCard title="Max Total Contact Hours" value={maxHours} color="info"/>
-        <ResultCard title="Min Total Contact Hours" value={minHours} color="info"/>
         <ResultCard title="Schedule at Least" value={atLeastHours} color="info"/>
+        <ResultCard title="Min Total Contact Hours" value={minHours} color="info"/>
         <ResultCard
           title="Target Weekly Contact Hours (estimate)"
           value={targetWeeklyContactHours.toFixed(1)}
