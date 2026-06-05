@@ -1,6 +1,6 @@
 import { useState } from "react";
-import "./App.css";
-import ResultCard from "./components/ResultCard";
+import ClassDetails from "./components/ClassDetails";
+import Summary from "./components/Summary";
 import MeetingTable from "./components/MeetingTable";
 import FtefTable from "./components/FtefTable";
 
@@ -12,6 +12,8 @@ function timeToMinutes(timeValue) {
 }
 
 function getClockMinutes(startTime, endTime) {
+  if (!startTime || !endTime) return 0;
+
   const start = timeToMinutes(startTime);
   const end = timeToMinutes(endTime);
 
@@ -60,6 +62,17 @@ const CONTACT_HOUR_TABLE = {
   290: 5.0
 };
 
+const blankMeetingRow = {
+  startTime: "",
+  endTime: "",
+  totalMeetings: ""
+};
+
+const blankFtefRow = {
+  workloadFactor: "",
+  instructorAssignedHours: ""
+};
+
 function calculateMeetingRow(row) {
   const totalClockMinutes = getClockMinutes(row.startTime, row.endTime);
   const clockHours = Math.floor(totalClockMinutes / 60);
@@ -78,9 +91,10 @@ function calculateMeetingRow(row) {
   };
 }
 
-function calculateFtefRow(row, catalogHours, maxHours) {
+function calculateFtefRow(row, catalogHours, classContactHours) {
   const ftefPercent = row.workloadFactor > 0 ? catalogHours / row.workloadFactor : 0;
-  const assignPercent = maxHours > 0 ? row.instructorAssignedHours / maxHours : 0;
+  const assignPercent =
+    classContactHours > 0 ? row.instructorAssignedHours / classContactHours : 0;
   const instructorFtef = ftefPercent * assignPercent;
 
   return {
@@ -91,22 +105,11 @@ function calculateFtefRow(row, catalogHours, maxHours) {
 }
 
 export default function App() {
-  const [catalogHours, setCatalogHours] = useState(3);
-  const [instructionalWeeks, setInstructionalWeeks] = useState(16);
-  const [meetingsPerWeek, setMeetingsPerWeek] = useState(2);
-  const [meetingRows, setMeetingRows] = useState([
-    {
-      startTime: "08:00",
-      endTime: "09:25",
-      totalMeetings: 32
-    }
-  ]);
-  const [ftefRows, setFtefRows] = useState([
-    {
-      workloadFactor: 15,
-      instructorAssignedHours: 45
-    }
-  ]);
+  const [catalogHours, setCatalogHours] = useState("");
+  const [instructionalWeeks, setInstructionalWeeks] = useState("");
+  const [meetingsPerWeek, setMeetingsPerWeek] = useState("");
+  const [meetingRows, setMeetingRows] = useState([{ ...blankMeetingRow }]);
+  const [ftefRows, setFtefRows] = useState([{ ...blankFtefRow }]);
   const totalScheduledContactHours = meetingRows.reduce((sum, row) => {
     const totalClockMinutes = getClockMinutes(row.startTime, row.endTime);
     const contactHours = getContactHours(totalClockMinutes);
@@ -117,7 +120,9 @@ export default function App() {
 
     return sum + contactHours * row.totalMeetings;
   }, 0);
+  const classContactHours = round2(totalScheduledContactHours);
   const maxHours = catalogHours * 18;
+  const atLeastHours = catalogHours * 17;
   const minHours = catalogHours * 16;
   const targetWeeklyContactHours =
     instructionalWeeks > 0
@@ -141,11 +146,7 @@ export default function App() {
   function addMeetingRow() {
     setMeetingRows((currentRows) => [
       ...currentRows,
-      {
-        startTime: "",
-        endTime: "",
-        totalMeetings: 0
-      }
+      { ...blankMeetingRow }
     ]);
   }
 
@@ -170,10 +171,7 @@ export default function App() {
   function addFtefRow() {
     setFtefRows((currentRows) => [
       ...currentRows,
-      {
-        workloadFactor: 0,
-        instructorAssignedHours: 0
-      }
+      { ...blankFtefRow }
     ]);
   }
 
@@ -189,95 +187,94 @@ export default function App() {
 
   const totalFtef = ftefRows.reduce((sum, row) => {
     const ftefPercent = row.workloadFactor > 0 ? catalogHours / row.workloadFactor : 0;
-    const assignPercent = catalogHours > 0 ? row.instructorAssignedHours / catalogHours : 0;
+    const assignPercent =
+      classContactHours > 0 ? row.instructorAssignedHours / classContactHours : 0;
 
     return sum + ftefPercent * assignPercent;
   }, 0);
 
-    let courseStatus = "Not Scheduled";
-    let courseStatusColor = "warning";
+  function clearValues() {
+    setCatalogHours("");
+    setInstructionalWeeks("");
+    setMeetingsPerWeek("");
+    setMeetingRows((currentRows) =>
+      currentRows.map(() => ({ ...blankMeetingRow }))
+    );
+    setFtefRows((currentRows) =>
+      currentRows.map(() => ({ ...blankFtefRow }))
+    );
+  }
 
-    if (totalScheduledContactHours === 0) {
-      courseStatus = "No Meeting Pattern Entered";
-    }
-    else if (
-      totalScheduledContactHours >= minHours &&
-      totalScheduledContactHours <= maxHours
-    ) {
-      courseStatus = "Within Range";
-      courseStatusColor = "success";
-    }
-    else if (totalScheduledContactHours > maxHours) {
-      courseStatus = "Over Scheduled";
-    }
-    else {
-      courseStatus = "Under Scheduled";
-    }
+  let courseStatus;
+  let courseStatusColor = "warning";
+
+  if (totalScheduledContactHours === 0) {
+    courseStatus = "coming soon...";
+  } else if (
+    totalScheduledContactHours >= atLeastHours &&
+    totalScheduledContactHours <= maxHours + 1
+  ) {
+    courseStatus = "good!";
+    courseStatusColor = "success";
+  } else if (totalScheduledContactHours > maxHours ) {
+    courseStatus = "too high (goal is: " + maxHours + ")";
+  } else {
+    courseStatus = "too low (goal is: " + atLeastHours + " - " + maxHours + ")";
+  }
 
   return (
-    <main className="page">
-      <section className="card">
-      <h1>Hours Calculator</h1>
-        <p className="intro">
-          Enter catalog hours to calculate the semester hour range.
+    <main className="min-h-screen bg-gray-100 px-2 py-3 font-[Arial,sans-serif] text-gray-950 sm:p-3">
+
+      <section className="mx-auto mb-3 max-w-[1200px] rounded-[18px] bg-white p-3 shadow-[0_10px_25px_rgba(0,0,0,0.08)] sm:p-4">
+        <div className="grid items-center gap-2 [grid-template-columns:1fr_auto_1fr]">
+          <h1 className="col-start-2 m-0 text-center text-4xl font-bold">
+            Hours Calculator
+          </h1>
+          <button
+            className="col-start-3 min-h-[44px] cursor-pointer justify-self-end rounded-[7px] border border-[#2f5f88] bg-gradient-to-b from-[#477fac] to-[#3A6F9E] px-4 py-2 font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_4px_rgba(0,0,0,0.14)] transition hover:from-[#5289b7] hover:to-[#3f78aa] active:translate-y-px active:shadow-[inset_0_2px_3px_rgba(0,0,0,0.16)]"
+            type="button"
+            onClick={clearValues}
+          >
+            Clear Values
+          </button>
+        </div>
+        <p className="text-center text-gray-600">
+          Schedule as near to the maximum hours as is practical.
         </p>
 
-      <h2>Class Details</h2>
-
-      <label className="field">
-        <span>Catalog Hours</span>
-        <input
-          type="number"
-          value={catalogHours}
-          onChange={(event) => setCatalogHours(Number(event.target.value))}
+        <ClassDetails
+          catalogHours={catalogHours}
+          setCatalogHours={setCatalogHours}
+          instructionalWeeks={instructionalWeeks}
+          setInstructionalWeeks={setInstructionalWeeks}
+          meetingsPerWeek={meetingsPerWeek}
+          setMeetingsPerWeek={setMeetingsPerWeek}
         />
-      </label>
-      <label className="field">
-        <span>Instructional Weeks</span>
-        <input
-          type="number"
-          value={instructionalWeeks}
-          onChange={(event) => setInstructionalWeeks(Number(event.target.value))}
+ 
+        <Summary
+          maxHours={maxHours}
+          minHours={minHours}
+          atLeastHours={atLeastHours}
+          targetWeeklyContactHours={targetWeeklyContactHours}
+          estimatedMeetingContactHours={estimatedMeetingContactHours}
         />
-      </label>
-      <label className="field">
-        <span>Meetings Per Week</span>
-        <input
-          type="number"
-          value={meetingsPerWeek}
-          onChange={(event) => setMeetingsPerWeek(Number(event.target.value))}
-        />
-      </label>
-
-
-     </section>
-
-      <section className="card">
-        <h2>Summary</h2>
-
-          <div className="results">
-            <ResultCard title="Maximum Hours" value={maxHours}   color="success"/>
-            <ResultCard title="Minimum Contact Hours" value={minHours}   color="warning"/>
-            <ResultCard title="Target Weekly Contact Hours" value={targetWeeklyContactHours.toFixed(2)}   color="info"/>
-            <ResultCard title="Estimated Meeting Contact Hours" value={estimatedMeetingContactHours.toFixed(1)}   color="info"/>
-            <ResultCard title="Course Status" value={courseStatus} color={courseStatusColor} />
-            <ResultCard title="Total Scheduled Contact Hours" value={round2(totalScheduledContactHours)} color="success" />
-            <ResultCard title="Total FTEF%" value={round2(totalFtef)} color="success" />
-          </div>
-
       </section>
 
-      <section className="card">
+      <section className="mx-auto mb-3 max-w-[1200px] rounded-[18px] bg-white p-3 shadow-[0_10px_25px_rgba(0,0,0,0.08)] sm:p-4">
         <MeetingTable
           meetingRows={meetingRows}
           updateMeetingRow={updateMeetingRow}
           deleteMeetingRow={deleteMeetingRow}
           addMeetingRow={addMeetingRow}
           calculateMeetingRow={calculateMeetingRow}
+          courseStatus={courseStatus}
+          courseStatusColor={courseStatusColor}
+          totalScheduledContactHours={totalScheduledContactHours}
+          round2={round2}
         />
       </section>
 
-      <section className="card">
+      <section className="mx-auto mb-3 max-w-[1200px] rounded-[18px] bg-white p-3 shadow-[0_10px_25px_rgba(0,0,0,0.08)] sm:p-4">
         <FtefTable
           ftefRows={ftefRows}
           updateFtefRow={updateFtefRow}
@@ -285,9 +282,10 @@ export default function App() {
           addFtefRow={addFtefRow}
           calculateFtefRow={calculateFtefRow}
           catalogHours={catalogHours}
-          maxHours={maxHours}
-        /> 
-        </section>
-  </main>
+          classContactHours={classContactHours}
+          totalFtef={totalFtef}
+        />
+      </section>
+    </main>
   );
 }
