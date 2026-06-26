@@ -49,6 +49,12 @@ export default function FtefTable({
             {ftefRows.map((row, index) => {
               const { ftefPercent, assignPercent, instructorFtef } =
                 calculateFtefRow(row, catalogHours, classContactHours);
+              const rowCatalogHours =
+                row.catalogHours === "" ? catalogHours : row.catalogHours;
+              const rowClassContactHours =
+                row.classContactHours === ""
+                  ? classContactHours
+                  : row.classContactHours;
 
               return (
                 <tr key={index}>
@@ -56,6 +62,7 @@ export default function FtefTable({
                     <input
                       className={inputClass}
                       type="number"
+                      min={0}
                       value={row.workloadFactor}
                       onChange={(event) =>
                         updateFtefRow(
@@ -67,14 +74,39 @@ export default function FtefTable({
                     />
                   </td>
 
-                  <td className={cellClass}>{catalogHours ?? ""}</td>
+                  <td className={cellClass}>
+                    <input
+                      className={inputClass}
+                      type="number"
+                      min={0}
+                      value={rowCatalogHours}
+                      onChange={(event) =>
+                        updateFtefRow(index, "catalogHours", event.target.value)
+                      }
+                    />
+                  </td>
                   <td className={cellClass}>{formatPercent3(ftefPercent)}</td>
-                  <td className={cellClass}>{classContactHours ?? ""}</td>
+                  <td className={cellClass}>
+                    <input
+                      className={inputClass}
+                      type="number"
+                      min={0}
+                      value={rowClassContactHours}
+                      onChange={(event) =>
+                        updateFtefRow(
+                          index,
+                          "classContactHours",
+                          event.target.value
+                        )
+                      }
+                    />
+                  </td>
 
                   <td className={cellClass}>
                     <input
                       className={inputClass}
                       type="number"
+                      min={0}
                       value={row.instructorAssignedHours}
                       onChange={(event) =>
                         updateFtefRow(

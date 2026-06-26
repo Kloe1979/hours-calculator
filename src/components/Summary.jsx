@@ -4,8 +4,7 @@ export default function Summary({
   maxHours,
   minHours,
   atLeastHours,
-  targetWeeklyContactHours,
-  estimatedMeetingContactHours,
+  targetMeetingContactHours,
 }) {
   return (
     <>
@@ -14,13 +13,8 @@ export default function Summary({
         <ResultCard title="Schedule at Least" value={atLeastHours} color="info"/>
         <ResultCard title="Min Total Contact Hours" value={minHours} color="info"/>
         <ResultCard
-          title="Target Weekly Contact Hours (estimate)"
-          value={targetWeeklyContactHours.toFixed(1)}
-          color="info"
-        />
-        <ResultCard
           title="Target Meeting Contact Hours (estimate)"
-          value={estimatedMeetingContactHours.toFixed(1)}
+          value={targetMeetingContactHours.toFixed(1)}
           color="info"
         />
       </div>

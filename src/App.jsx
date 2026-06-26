@@ -5,10 +5,71 @@ import MeetingTable from "./components/MeetingTable";
 import FtefTable from "./components/FtefTable";
 
 function timeToMinutes(timeValue) {
-  if (!timeValue) return 0;
+  if (!timeValue || !/^\d{2}:\d{2}$/.test(timeValue)) return null;
 
   const [hours, minutes] = timeValue.split(":").map(Number);
+
+  if (hours > 23 || minutes > 59) return null;
+
   return hours * 60 + minutes;
+}
+
+function minutesToTime(totalMinutes) {
+  const minutesInDay = 24 * 60;
+  const normalizedMinutes =
+    ((totalMinutes % minutesInDay) + minutesInDay) % minutesInDay;
+  const hours = Math.floor(normalizedMinutes / 60);
+  const minutes = normalizedMinutes % 60;
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+function parseTimeEntry(timeValue) {
+  if (!timeValue) return null;
+
+  const trimmedValue = timeValue.trim();
+  const colonMatch = trimmedValue.match(/^(\d{1,2}):(\d{1,2})$/);
+
+  if (colonMatch) {
+    const [, hours, minutes] = colonMatch;
+    return {
+      hours: Number(hours),
+      minutes: Number(minutes),
+    };
+  }
+
+  const digitsOnly = trimmedValue.replace(/\D/g, "");
+
+  if (digitsOnly.length === 0 || digitsOnly.length > 4) {
+    return null;
+  }
+
+  if (digitsOnly.length <= 2) {
+    return {
+      hours: Number(digitsOnly),
+      minutes: 0,
+    };
+  }
+
+  return {
+    hours: Number(digitsOnly.slice(0, -2)),
+    minutes: Number(digitsOnly.slice(-2)),
+  };
+}
+
+function roundTimeToNearestFiveMinutes(timeValue) {
+  if (!timeValue) return timeValue;
+
+  const parsedTime = parseTimeEntry(timeValue);
+
+  if (!parsedTime || parsedTime.hours > 23 || parsedTime.minutes > 59) {
+    return "";
+  }
+
+  const roundedMinutes =
+    Math.round((parsedTime.hours * 60 + parsedTime.minutes) / 5) * 5;
+
+  return minutesToTime(roundedMinutes);
 }
 
 function getClockMinutes(startTime, endTime) {
@@ -16,6 +77,8 @@ function getClockMinutes(startTime, endTime) {
 
   const start = timeToMinutes(startTime);
   const end = timeToMinutes(endTime);
+
+  if (start === null || end === null) return 0;
 
   return end - start;
 }
@@ -26,6 +89,10 @@ function getContactHours(clockMinutes) {
 
 function round2(value) {
   return Math.round(value * 100) / 100;
+}
+
+function isNonNegativeInputValue(value) {
+  return !String(value).includes("-");
 }
 
 const CONTACT_HOUR_TABLE = {
@@ -59,18 +126,35 @@ const CONTACT_HOUR_TABLE = {
   265: 4.7,
   270: 4.8,
   275: 4.9,
-  290: 5.0
+  290: 5.0,
+  305: 5.3,
+  310: 5.4,
+  315: 5.5,
+  320: 5.6,
+  325: 5.7,
+  330: 5.8,
+  335: 5.9,
+  350: 6.0,
+  365: 6.3,
+  370: 6.4,
+  375: 6.5,
+  380: 6.6,
+  385: 6.7,
+  390: 6.8,
+  395: 6.9,
 };
 
 const blankMeetingRow = {
   startTime: "",
   endTime: "",
-  totalMeetings: ""
+  totalMeetings: "",
 };
 
 const blankFtefRow = {
   workloadFactor: "",
-  instructorAssignedHours: ""
+  catalogHours: "",
+  classContactHours: "",
+  instructorAssignedHours: "",
 };
 
 function calculateMeetingRow(row) {
@@ -92,9 +176,16 @@ function calculateMeetingRow(row) {
 }
 
 function calculateFtefRow(row, catalogHours, classContactHours) {
-  const ftefPercent = row.workloadFactor > 0 ? catalogHours / row.workloadFactor : 0;
+  const rowCatalogHours =
+    row.catalogHours === "" ? catalogHours : row.catalogHours;
+  const rowClassContactHours =
+    row.classContactHours === "" ? classContactHours : row.classContactHours;
+  const ftefPercent =
+    row.workloadFactor > 0 ? rowCatalogHours / row.workloadFactor : 0;
   const assignPercent =
-    classContactHours > 0 ? row.instructorAssignedHours / classContactHours : 0;
+    rowClassContactHours > 0
+      ? row.instructorAssignedHours / rowClassContactHours
+      : 0;
   const instructorFtef = ftefPercent * assignPercent;
 
   return {
@@ -106,8 +197,7 @@ function calculateFtefRow(row, catalogHours, classContactHours) {
 
 export default function App() {
   const [catalogHours, setCatalogHours] = useState("");
-  const [instructionalWeeks, setInstructionalWeeks] = useState("");
-  const [meetingsPerWeek, setMeetingsPerWeek] = useState("");
+  const [numberOfMeetings, setNumberOfMeetings] = useState("");
   const [meetingRows, setMeetingRows] = useState([{ ...blankMeetingRow }]);
   const [ftefRows, setFtefRows] = useState([{ ...blankFtefRow }]);
   const totalScheduledContactHours = meetingRows.reduce((sum, row) => {
@@ -124,29 +214,54 @@ export default function App() {
   const maxHours = catalogHours * 18;
   const atLeastHours = catalogHours * 17;
   const minHours = catalogHours * 16;
-  const targetWeeklyContactHours =
-    instructionalWeeks > 0
-      ? maxHours / instructionalWeeks
-      : 0;
-  const estimatedMeetingContactHours =
-    meetingsPerWeek > 0
-      ? targetWeeklyContactHours / meetingsPerWeek
-      : 0;
+  const targetMeetingContactHours =
+    numberOfMeetings > 0 ? maxHours / numberOfMeetings : 0;
+  const showMinimumMeetingContactHoursMessage =
+    maxHours > 0 && numberOfMeetings > 0 && targetMeetingContactHours < 1;
+
+  function setNonNegativeValue(setValue, value) {
+    if (isNonNegativeInputValue(value)) {
+      setValue(value);
+    }
+  }
+
+  function updateNumberOfMeetings(value) {
+    if (!isNonNegativeInputValue(value)) return;
+
+    setMeetingRows((currentRows) =>
+      currentRows.map((row) =>
+        row.totalMeetings === "" || row.totalMeetings === numberOfMeetings
+          ? { ...row, totalMeetings: value }
+          : row,
+      ),
+    );
+    setNumberOfMeetings(value);
+  }
 
   function updateMeetingRow(index, field, value) {
+    if (!isNonNegativeInputValue(value)) return;
+
+    setMeetingRows((currentRows) =>
+      currentRows.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, [field]: value } : row,
+      ),
+    );
+  }
+
+  function normalizeMeetingRowTime(index, field) {
     setMeetingRows((currentRows) =>
       currentRows.map((row, rowIndex) =>
         rowIndex === index
-          ? { ...row, [field]: value }
-          : row
-      )
+          ? { ...row, [field]: roundTimeToNearestFiveMinutes(row[field]) }
+          : row,
+      ),
     );
   }
 
   function addMeetingRow() {
     setMeetingRows((currentRows) => [
       ...currentRows,
-      { ...blankMeetingRow }
+      { ...blankMeetingRow, totalMeetings: numberOfMeetings },
     ]);
   }
 
@@ -161,18 +276,17 @@ export default function App() {
   }
 
   function updateFtefRow(index, field, value) {
+    if (!isNonNegativeInputValue(value)) return;
+
     setFtefRows((currentRows) =>
       currentRows.map((row, rowIndex) =>
-        rowIndex === index ? { ...row, [field]: value } : row
-      )
+        rowIndex === index ? { ...row, [field]: value } : row,
+      ),
     );
   }
 
   function addFtefRow() {
-    setFtefRows((currentRows) => [
-      ...currentRows,
-      { ...blankFtefRow }
-    ]);
+    setFtefRows((currentRows) => [...currentRows, { ...blankFtefRow }]);
   }
 
   function deleteFtefRow(indexToDelete) {
@@ -186,29 +300,30 @@ export default function App() {
   }
 
   const totalFtef = ftefRows.reduce((sum, row) => {
-    const ftefPercent = row.workloadFactor > 0 ? catalogHours / row.workloadFactor : 0;
-    const assignPercent =
-      classContactHours > 0 ? row.instructorAssignedHours / classContactHours : 0;
+    const { instructorFtef } = calculateFtefRow(
+      row,
+      catalogHours,
+      classContactHours,
+    );
 
-    return sum + ftefPercent * assignPercent;
+    return sum + instructorFtef;
   }, 0);
 
   function clearValues() {
     setCatalogHours("");
-    setInstructionalWeeks("");
-    setMeetingsPerWeek("");
+    setNumberOfMeetings("");
     setMeetingRows((currentRows) =>
-      currentRows.map(() => ({ ...blankMeetingRow }))
+      currentRows.map(() => ({ ...blankMeetingRow })),
     );
-    setFtefRows((currentRows) =>
-      currentRows.map(() => ({ ...blankFtefRow }))
-    );
+    setFtefRows((currentRows) => currentRows.map(() => ({ ...blankFtefRow })));
   }
 
   let courseStatus;
   let courseStatusColor = "warning";
 
-  if (totalScheduledContactHours === 0) {
+  if (maxHours === 0) {
+    courseStatus = "...";
+  } else if (totalScheduledContactHours === 0) {
     courseStatus = "coming soon...";
   } else if (
     totalScheduledContactHours >= atLeastHours &&
@@ -216,7 +331,7 @@ export default function App() {
   ) {
     courseStatus = "good!";
     courseStatusColor = "success";
-  } else if (totalScheduledContactHours > maxHours ) {
+  } else if (totalScheduledContactHours > maxHours) {
     courseStatus = "too high (goal is: " + maxHours + ")";
   } else {
     courseStatus = "too low (goal is: " + atLeastHours + " - " + maxHours + ")";
@@ -224,7 +339,6 @@ export default function App() {
 
   return (
     <main className="min-h-screen bg-gray-100 px-2 py-3 font-[Arial,sans-serif] text-gray-950 sm:p-3">
-
       <section className="mx-auto mb-3 max-w-[1200px] rounded-[18px] bg-white p-3 shadow-[0_10px_25px_rgba(0,0,0,0.08)] sm:p-4">
         <div className="grid items-center gap-2 [grid-template-columns:1fr_auto_1fr]">
           <h1 className="col-start-2 m-0 text-center text-4xl font-bold">
@@ -244,19 +358,19 @@ export default function App() {
 
         <ClassDetails
           catalogHours={catalogHours}
-          setCatalogHours={setCatalogHours}
-          instructionalWeeks={instructionalWeeks}
-          setInstructionalWeeks={setInstructionalWeeks}
-          meetingsPerWeek={meetingsPerWeek}
-          setMeetingsPerWeek={setMeetingsPerWeek}
+          setCatalogHours={(value) => setNonNegativeValue(setCatalogHours, value)}
+          numberOfMeetings={numberOfMeetings}
+          setNumberOfMeetings={updateNumberOfMeetings}
+          showMinimumMeetingContactHoursMessage={
+            showMinimumMeetingContactHoursMessage
+          }
         />
- 
+
         <Summary
           maxHours={maxHours}
           minHours={minHours}
           atLeastHours={atLeastHours}
-          targetWeeklyContactHours={targetWeeklyContactHours}
-          estimatedMeetingContactHours={estimatedMeetingContactHours}
+          targetMeetingContactHours={targetMeetingContactHours}
         />
       </section>
 
@@ -264,6 +378,7 @@ export default function App() {
         <MeetingTable
           meetingRows={meetingRows}
           updateMeetingRow={updateMeetingRow}
+          normalizeMeetingRowTime={normalizeMeetingRowTime}
           deleteMeetingRow={deleteMeetingRow}
           addMeetingRow={addMeetingRow}
           calculateMeetingRow={calculateMeetingRow}
