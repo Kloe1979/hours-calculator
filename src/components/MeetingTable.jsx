@@ -1,4 +1,5 @@
 import ResultCard from "./ResultCard";
+import { tableClasses } from "../lib/componentStyles";
 
 export default function MeetingTable({
   meetingRows,
@@ -12,14 +13,6 @@ export default function MeetingTable({
   totalScheduledContactHours,
   round2,
 }) {
-  const cellClass = "border border-gray-300 p-2 text-center align-middle";
-  const headerClass = `${cellClass} bg-gray-100 text-sm font-semibold`;
-  const inputClass =
-    "w-full max-w-[140px] rounded-md border border-gray-300 px-2 py-2 text-sm text-center";
-  const buttonClass =
-    "mt-3 cursor-pointer rounded-lg border-0 bg-[#3A6F9E] px-3 py-2.5 font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500";
-  const addButtonClass =
-    "min-h-[50px] cursor-pointer rounded-[7px] border border-[#2f5f88] bg-gradient-to-b from-[#477fac] to-[#3A6F9E] px-3 py-1 font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_4px_rgba(0,0,0,0.14)] transition hover:from-[#5289b7] hover:to-[#3f78aa] active:translate-y-px active:shadow-[inset_0_2px_3px_rgba(0,0,0,0.16)]";
   const calculatedMeetingRows = meetingRows.map(calculateMeetingRow);
   const validationMessages = [
     calculatedMeetingRows.some(
@@ -43,15 +36,15 @@ export default function MeetingTable({
         <table className="mt-2 w-full table-auto border-collapse">
           <thead>
             <tr>
-              <th className={headerClass}>Start Time</th>
-              <th className={headerClass}>End Time</th>
-              <th className={headerClass}>Clock Hours</th>
-              <th className={headerClass}>Clock Minutes</th>
-              <th className={headerClass}>Total Clock Minutes</th>
-              <th className={headerClass}>Meeting Contact Hours</th>
-              <th className={headerClass}>Number of Meetings</th>
-              <th className={headerClass}>Total Contact Hours</th>
-              <th className={headerClass}>Actions</th>
+              <th className={tableClasses.header}>Start Time</th>
+              <th className={tableClasses.header}>End Time</th>
+              <th className={tableClasses.header}>Clock Hours</th>
+              <th className={tableClasses.header}>Clock Minutes</th>
+              <th className={tableClasses.header}>Total Clock Minutes</th>
+              <th className={tableClasses.header}>Meeting Contact Hours</th>
+              <th className={tableClasses.header}>Number of Meetings</th>
+              <th className={tableClasses.header}>Total Contact Hours</th>
+              <th className={tableClasses.header}>Actions</th>
             </tr>
           </thead>
 
@@ -67,9 +60,9 @@ export default function MeetingTable({
 
               return (
                 <tr key={index}>
-                  <td className={cellClass}>
+                  <td className={tableClasses.cell}>
                     <input
-                      className={inputClass}
+                      className={tableClasses.input}
                       type="text"
                       inputMode="numeric"
                       placeholder="HH:MM"
@@ -81,9 +74,9 @@ export default function MeetingTable({
                     />
                   </td>
 
-                  <td className={cellClass}>
+                  <td className={tableClasses.cell}>
                     <input
-                      className={inputClass}
+                      className={tableClasses.input}
                       type="text"
                       inputMode="numeric"
                       placeholder="HH:MM"
@@ -95,14 +88,14 @@ export default function MeetingTable({
                     />
                   </td>
 
-                  <td className={cellClass}>{clockHours}</td>
-                  <td className={cellClass}>{partialClockMinutes}</td>
-                  <td className={cellClass}>{totalClockMinutes}</td>
-                  <td className={cellClass}>{contactHours ?? ""}</td>
+                  <td className={tableClasses.cell}>{clockHours}</td>
+                  <td className={tableClasses.cell}>{partialClockMinutes}</td>
+                  <td className={tableClasses.cell}>{totalClockMinutes}</td>
+                  <td className={tableClasses.cell}>{contactHours ?? ""}</td>
 
-                  <td className={cellClass}>
+                  <td className={tableClasses.cell}>
                     <input
-                      className={inputClass}
+                      className={tableClasses.input}
                       type="number"
                       min={0}
                       value={row.totalMeetings}
@@ -116,11 +109,11 @@ export default function MeetingTable({
                     />
                   </td>
 
-                  <td className={cellClass}>{totalContactHours}</td>
+                  <td className={tableClasses.cell}>{totalContactHours}</td>
 
-                  <td className={cellClass}>
+                  <td className={tableClasses.cell}>
                     <button
-                      className={buttonClass}
+                      className={tableClasses.actionButton}
                       type="button"
                       onClick={() => deleteMeetingRow(index)}
                       disabled={meetingRows.length === 1}
@@ -147,7 +140,7 @@ export default function MeetingTable({
           color="success"
         />
         <button
-          className={addButtonClass}
+          className={tableClasses.addButton}
           type="button"
           onClick={addMeetingRow}
         >

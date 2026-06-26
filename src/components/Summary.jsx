@@ -5,6 +5,7 @@ export default function Summary({
   minHours,
   atLeastHours,
   targetMeetingContactHours,
+  targetMeetingClockHours,
 }) {
   return (
     <>
@@ -15,6 +16,11 @@ export default function Summary({
         <ResultCard
           title="Target Meeting Contact Hours (estimate)"
           value={targetMeetingContactHours.toFixed(1)}
+          color="info"
+        />
+        <ResultCard
+          title="Target Meeting Clock Hours"
+          value={targetMeetingClockHours}
           color="info"
         />
       </div>

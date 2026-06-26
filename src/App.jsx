@@ -3,146 +3,18 @@ import ClassDetails from "./components/ClassDetails";
 import Summary from "./components/Summary";
 import MeetingTable from "./components/MeetingTable";
 import FtefTable from "./components/FtefTable";
-
-function timeToMinutes(timeValue) {
-  if (!timeValue || !/^\d{2}:\d{2}$/.test(timeValue)) return null;
-
-  const [hours, minutes] = timeValue.split(":").map(Number);
-
-  if (hours > 23 || minutes > 59) return null;
-
-  return hours * 60 + minutes;
-}
-
-function minutesToTime(totalMinutes) {
-  const minutesInDay = 24 * 60;
-  const normalizedMinutes =
-    ((totalMinutes % minutesInDay) + minutesInDay) % minutesInDay;
-  const hours = Math.floor(normalizedMinutes / 60);
-  const minutes = normalizedMinutes % 60;
-
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-}
-
-function parseTimeEntry(timeValue) {
-  if (!timeValue) return null;
-
-  const trimmedValue = timeValue.trim();
-  const colonMatch = trimmedValue.match(/^(\d{1,2}):(\d{1,2})$/);
-
-  if (colonMatch) {
-    const [, hours, minutes] = colonMatch;
-    return {
-      hours: Number(hours),
-      minutes: Number(minutes),
-    };
-  }
-
-  const digitsOnly = trimmedValue.replace(/\D/g, "");
-
-  if (digitsOnly.length === 0 || digitsOnly.length > 4) {
-    return null;
-  }
-
-  if (digitsOnly.length <= 2) {
-    return {
-      hours: Number(digitsOnly),
-      minutes: 0,
-    };
-  }
-
-  return {
-    hours: Number(digitsOnly.slice(0, -2)),
-    minutes: Number(digitsOnly.slice(-2)),
-  };
-}
-
-function roundTimeToNearestFiveMinutes(timeValue) {
-  if (!timeValue) return timeValue;
-
-  const parsedTime = parseTimeEntry(timeValue);
-
-  if (!parsedTime || parsedTime.hours > 23 || parsedTime.minutes > 59) {
-    return "";
-  }
-
-  const roundedMinutes =
-    Math.round((parsedTime.hours * 60 + parsedTime.minutes) / 5) * 5;
-
-  return minutesToTime(roundedMinutes);
-}
-
-function getClockMinutes(startTime, endTime) {
-  if (!startTime || !endTime) return 0;
-
-  const start = timeToMinutes(startTime);
-  const end = timeToMinutes(endTime);
-
-  if (start === null || end === null) return 0;
-
-  return end - start;
-}
-
-function getContactHours(clockMinutes) {
-  return CONTACT_HOUR_TABLE[clockMinutes] ?? null;
-}
-
-function round2(value) {
-  return Math.round(value * 100) / 100;
-}
-
-function isNonNegativeInputValue(value) {
-  return !String(value).includes("-");
-}
-
-const CONTACT_HOUR_TABLE = {
-  50: 1.0,
-  65: 1.3,
-  70: 1.4,
-  75: 1.5,
-  80: 1.6,
-  85: 1.7,
-  90: 1.8,
-  95: 1.9,
-  110: 2.0,
-  125: 2.3,
-  130: 2.4,
-  135: 2.5,
-  140: 2.6,
-  145: 2.7,
-  150: 2.8,
-  155: 2.9,
-  170: 3.0,
-  185: 3.3,
-  190: 3.4,
-  195: 3.5,
-  200: 3.6,
-  205: 3.7,
-  230: 4.0,
-  245: 4.3,
-  250: 4.4,
-  255: 4.5,
-  260: 4.6,
-  265: 4.7,
-  270: 4.8,
-  275: 4.9,
-  290: 5.0,
-  305: 5.3,
-  310: 5.4,
-  315: 5.5,
-  320: 5.6,
-  325: 5.7,
-  330: 5.8,
-  335: 5.9,
-  350: 6.0,
-  365: 6.3,
-  370: 6.4,
-  375: 6.5,
-  380: 6.6,
-  385: 6.7,
-  390: 6.8,
-  395: 6.9,
-};
+import { calculateFtefRow, calculateMeetingRow } from "./lib/calculations";
+import {
+  getClockMinutesForContactHours,
+  getContactHours,
+} from "./lib/contactHours";
+import { round2 } from "./lib/format";
+import {
+  formatClockMinutesDuration,
+  getClockMinutes,
+  roundTimeToNearestFiveMinutes,
+} from "./lib/time";
+import { isNonNegativeInputValue } from "./lib/validation";
 
 const blankMeetingRow = {
   startTime: "",
@@ -156,44 +28,6 @@ const blankFtefRow = {
   classContactHours: "",
   instructorAssignedHours: "",
 };
-
-function calculateMeetingRow(row) {
-  const totalClockMinutes = getClockMinutes(row.startTime, row.endTime);
-  const clockHours = Math.floor(totalClockMinutes / 60);
-  const partialClockMinutes = totalClockMinutes % 60;
-  const contactHours = getContactHours(totalClockMinutes);
-
-  const totalContactHours =
-    contactHours === null ? "" : round2(contactHours * row.totalMeetings);
-
-  return {
-    totalClockMinutes,
-    clockHours,
-    partialClockMinutes,
-    contactHours,
-    totalContactHours,
-  };
-}
-
-function calculateFtefRow(row, catalogHours, classContactHours) {
-  const rowCatalogHours =
-    row.catalogHours === "" ? catalogHours : row.catalogHours;
-  const rowClassContactHours =
-    row.classContactHours === "" ? classContactHours : row.classContactHours;
-  const ftefPercent =
-    row.workloadFactor > 0 ? rowCatalogHours / row.workloadFactor : 0;
-  const assignPercent =
-    rowClassContactHours > 0
-      ? row.instructorAssignedHours / rowClassContactHours
-      : 0;
-  const instructorFtef = ftefPercent * assignPercent;
-
-  return {
-    ftefPercent,
-    assignPercent,
-    instructorFtef,
-  };
-}
 
 export default function App() {
   const [catalogHours, setCatalogHours] = useState("");
@@ -216,6 +50,9 @@ export default function App() {
   const minHours = catalogHours * 16;
   const targetMeetingContactHours =
     numberOfMeetings > 0 ? maxHours / numberOfMeetings : 0;
+  const targetMeetingClockHours = formatClockMinutesDuration(
+    getClockMinutesForContactHours(targetMeetingContactHours),
+  );
   const showMinimumMeetingContactHoursMessage =
     maxHours > 0 && numberOfMeetings > 0 && targetMeetingContactHours < 1;
 
@@ -371,6 +208,7 @@ export default function App() {
           minHours={minHours}
           atLeastHours={atLeastHours}
           targetMeetingContactHours={targetMeetingContactHours}
+          targetMeetingClockHours={targetMeetingClockHours}
         />
       </section>
 

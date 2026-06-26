@@ -1,3 +1,5 @@
+import { classDetailInputClass } from "../lib/componentStyles";
+
 export default function ClassDetails({
   catalogHours,
   setCatalogHours,
@@ -5,9 +7,6 @@ export default function ClassDetails({
   setNumberOfMeetings,
   showMinimumMeetingContactHoursMessage,
 }) {
-  const inputClass =
-    "w-full rounded-md border border-gray-300 px-2.5 py-2 text-base text-center font-normal";
-
   return (
     <>
       <h2 className="mt-6 mb-2 text-center text-xl font-bold">Class Targets</h2>
@@ -17,7 +16,7 @@ export default function ClassDetails({
         <label className="grid gap-2 text-center font-bold">
           <span>Catalog Hours</span>
           <input
-            className={inputClass}
+            className={classDetailInputClass}
             type="number"
             min={0}
             value={catalogHours}
@@ -27,7 +26,7 @@ export default function ClassDetails({
         <label className="grid gap-2 text-center font-bold">
           <span>Number of Meetings</span>
           <input
-            className={inputClass}
+            className={classDetailInputClass}
             type="number"
             min={0}
             value={numberOfMeetings}
