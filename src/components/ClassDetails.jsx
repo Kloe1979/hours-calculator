@@ -36,8 +36,13 @@ export default function ClassDetails({
       </div>
 
       {showMinimumMeetingContactHoursMessage && (
-        <div className="mt-3 text-right font-bold italic text-[#780606]">
-          <p className="my-1">Meetings must be at least one (1) contact hour.</p>
+        <div
+          className="mt-3 text-right font-bold italic text-[#780606]"
+          role="alert"
+        >
+          <p className="my-1">
+            Meetings must be at least one (1) contact hour.
+          </p>
         </div>
       )}
     </>

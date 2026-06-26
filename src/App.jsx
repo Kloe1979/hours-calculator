@@ -177,12 +177,12 @@ export default function App() {
   return (
     <main className="min-h-screen bg-gray-100 px-2 py-3 font-[Arial,sans-serif] text-gray-950 sm:p-3">
       <section className="mx-auto mb-3 max-w-[1200px] rounded-[18px] bg-white p-3 shadow-[0_10px_25px_rgba(0,0,0,0.08)] sm:p-4">
-        <div className="grid items-center gap-2 [grid-template-columns:1fr_auto_1fr]">
-          <h1 className="col-start-2 m-0 text-center text-4xl font-bold">
+        <div className="grid items-center gap-2 sm:[grid-template-columns:1fr_auto_1fr]">
+          <h1 className="m-0 text-center text-3xl font-bold sm:col-start-2 sm:text-4xl">
             Hours Calculator
           </h1>
           <button
-            className="col-start-3 min-h-[44px] cursor-pointer justify-self-end rounded-[7px] border border-[#2f5f88] bg-gradient-to-b from-[#477fac] to-[#3A6F9E] px-4 py-2 font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_4px_rgba(0,0,0,0.14)] transition hover:from-[#5289b7] hover:to-[#3f78aa] active:translate-y-px active:shadow-[inset_0_2px_3px_rgba(0,0,0,0.16)]"
+            className="min-h-[44px] cursor-pointer justify-self-center rounded-[7px] border border-[#2F5F88] bg-[#3A6F9E] px-4 py-2 font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_4px_rgba(0,0,0,0.14)] transition hover:bg-[#2F5F88] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#0B4F75] active:translate-y-px active:shadow-[inset_0_2px_3px_rgba(0,0,0,0.16)] sm:col-start-3 sm:justify-self-end"
             type="button"
             onClick={clearValues}
           >
@@ -195,7 +195,9 @@ export default function App() {
 
         <ClassDetails
           catalogHours={catalogHours}
-          setCatalogHours={(value) => setNonNegativeValue(setCatalogHours, value)}
+          setCatalogHours={(value) =>
+            setNonNegativeValue(setCatalogHours, value)
+          }
           numberOfMeetings={numberOfMeetings}
           setNumberOfMeetings={updateNumberOfMeetings}
           showMinimumMeetingContactHoursMessage={
