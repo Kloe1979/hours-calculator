@@ -71,6 +71,7 @@ This will:
 - `npm run preview` — Preview production build locally
 - `npm run lint` — Run ESLint
 - `npm run deploy` — Build and deploy to GitHub Pages
+- `npm run test` - Run focused tests: time.test.js, calculations.test.js from test script in package.json
 
 ## Technologies
 
